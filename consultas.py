@@ -54,18 +54,67 @@ def buscar_especies(nombre, tipo, ruta, cod_entrenador):
 	conn = establecer_conexion()
 	q = ("SELECT t1.numero_pokedex, t1.nombre, COUNT(t2.id) "
 		"FROM (especie_pokemon e INNER JOIN tipo_especie t "
-		"ON e.nombre = t.nombre_especie) AS t1 "
+		"ON e.nombre = t.nombre_especie LEFT OUTER JOIN pokemon_salvaje ps "
+		"ON ps.nombre_especie = t.nombre_especie) AS t1 "
 		"LEFT OUTER JOIN (SELECT p.nombre_especie, p.id "
 		"FROM pokemon_capturado pc INNER JOIN pokemon p "
-		"ON p.id = pc.pokemon_id INNER JOIN pokemon_salvaje ps "
-		"ON ps.nombre_especie = p.nombre_especie "
-		"WHERE (pc.codigo_entrenador = " + str(cod_entrenador) + " AND "
-		" CAST(ps.numero_ruta AS TEXT) ILIKE \'" + str(ruta) + "\')) AS t2 "
+		"ON p.id = pc.pokemon_id "
+		"WHERE pc.codigo_entrenador = " + str(cod_entrenador) + ") AS t2 "
 		"ON t1.nombre = t2.nombre_especie "
 		"WHERE (t1.nombre_tipo ILIKE \'" + tipo + "\' AND "
-		"t1.nombre ILIKE \'" + nombre + "\') "
+		"t1.nombre ILIKE \'" + nombre + "\' AND "
+		"(CAST(t1.numero_ruta AS TEXT) ILIKE \'" + str(ruta) + "\' "
+		"OR \'" + str(ruta) + "\' = '%' ) ) "
 		"GROUP BY t1.numero_pokedex, t1.nombre " 
 		"ORDER BY t1.numero_pokedex"
+		)
+	print q
+	rc = realizar_consulta(conn, q)
+	cerrar_conexion(conn)
+	return rc
+	
+# Busca todas las areas en las que aparece el pokemon recibido y
+# las devuelve en una lista de tuplas de formato 
+# (nombre_especie, area).	
+def devolver_areas_pokemon(nombre_especie):
+	conn = establecer_conexion()
+	q = ("SELECT nombre_especie, numero_ruta "
+		"FROM pokemon_salvaje "
+		"WHERE nombre_especie ILIKE \'" + nombre_especie + "\' "
+		)
+	print q
+	rc = realizar_consulta(conn, q)
+	cerrar_conexion(conn)
+	return rc
+
+# Devuelve las evoluciones del pokemon recibido en una lista de
+# tuplas con formato (nombre_evolucion, metodo_evolucion)
+def devolver_evoluciones(nombre_especie):
+	conn = establecer_conexion()
+	q = ("SELECT epn.nombre_evolucion, CAST(epn.nivel AS TEXT) "
+		"FROM evolucion_por_nivel epn "
+		"WHERE epn.nombre_preevolucion ILIKE \'" + nombre_especie + "\' "
+		"UNION "
+		"SELECT epo.nombre_evolucion, epo.nombre_objeto "
+		"FROM evolucion_por_objeto epo "
+		"WHERE epo.nombre_preevolucion ILIKE \'" + nombre_especie + "\' "
+		)
+	print q
+	rc = realizar_consulta(conn, q)
+	cerrar_conexion(conn)
+	return rc
+
+# Devuelve las pre-evoluciones del pokemon recibido en una lista de
+# tuplas con formato (nombre_preevolucion, metodo_evolucion)
+def devolver_preevoluciones(nombre_especie):
+	conn = establecer_conexion()
+	q = ("SELECT epn.nombre_preevolucion, CAST(epn.nivel AS TEXT) "
+		"FROM evolucion_por_nivel epn "
+		"WHERE nombre_evolucion ILIKE \'" + nombre_especie + "\' "
+		"UNION "
+		"SELECT epo.nombre_preevolucion, epo.nombre_objeto "
+		"FROM evolucion_por_objeto epo "
+		"WHERE nombre_evolucion ILIKE \'" + nombre_especie + "\' "
 		)
 	print q
 	rc = realizar_consulta(conn, q)

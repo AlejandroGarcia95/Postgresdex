@@ -431,6 +431,7 @@ class Transform:
 #   keys may be present in the configuration dictionary for a given item
 DEFAULT_CONFIG = {"fill":"",
       "outline":"black",
+      "stipple": "",
       "width":"1",
       "arrow":"none",
       "text":"",
@@ -578,7 +579,7 @@ class _BBox(GraphicsObject):
     # Internal base class for objects represented by bounding box
     # (opposite corners) Line segment is a degenerate case.
     
-    def __init__(self, p1, p2, options=["outline","width","fill"]):
+    def __init__(self, p1, p2, options=["outline","width","fill", "stipple"]):
         GraphicsObject.__init__(self, options)
         self.p1 = p1.clone()
         self.p2 = p2.clone()
@@ -592,6 +593,10 @@ class _BBox(GraphicsObject):
     def getP1(self): return self.p1.clone()
 
     def getP2(self): return self.p2.clone()
+    
+    def setTransparency(self):
+		self._reconfig("outline", "")
+		self._reconfig("stipple", "gray50")
     
     def getCenter(self):
         p1 = self.p1

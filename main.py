@@ -8,6 +8,76 @@ from consultas import *
 def limpiar_pantalla(win):
 	for item in win.items[:]:
 		item.undraw()
+
+# Funcion auxiliar que devuelve un rectangulo con las
+# coordenadas correctas dependiendo el area en el mapa
+def generar_rectangulo_area(area):
+	rutas = {"101": Rectangle(Point(100, 311), Point(120, 332)),
+		"102": Rectangle(Point(60, 288), Point(98, 311)),
+		"103": Rectangle(Point(100, 265), Point(179, 287)),
+		"104": Rectangle(Point(20, 243), Point(40, 284)),
+		"105": Rectangle(Point(20, 284), Point(40, 378)),
+		"106": Rectangle(Point(20, 377), Point(79, 400)),
+		"107": Rectangle(Point(79, 400), Point(138, 423)),
+		"108": Rectangle(Point(138, 400), Point(198, 423)),
+		"109": Rectangle(Point(179, 356), Point(198, 400)),
+		"110": Rectangle(Point(179, 243), Point(198, 310)),
+		"111": Rectangle(Point(179, 85), Point(198, 220)),
+		"112": Rectangle(Point(139, 153), Point(179, 175)),
+		"113": Rectangle(Point(99, 85), Point(179, 108)),
+		"114": Rectangle(Point(38, 85), Point(59, 153)),
+		"115": Rectangle(Point(20, 129), Point(40, 197)),
+		"116": Rectangle(Point(40, 197), Point(119, 220)),
+		"117": Rectangle(Point(119, 220), Point(179, 243)),
+		"118": Rectangle(Point(218, 220), Point(240, 243)),
+		"119": Rectangle(Point(238, 85), Point(258, 242)),
+		"120": Rectangle(Point(279, 85), Point(298, 175)),
+		"121": Rectangle(Point(298, 152), Point(378, 175)),
+		"122": Rectangle(Point(338, 175), Point(358, 220)),
+		"123": Rectangle(Point(240, 220), Point(358, 243)),
+		"124": Rectangle(Point(418, 152), Point(497, 222)),
+		"125": Rectangle(Point(497, 152), Point(537, 198)),
+		"126": Rectangle(Point(418, 222), Point(497, 287)),
+		"127": Rectangle(Point(497, 222), Point(537, 287)),
+		"128": Rectangle(Point(477, 287), Point(537, 311)),
+		"129": Rectangle(Point(477, 311), Point(537, 334)),
+		"130": Rectangle(Point(423, 311), Point(477, 334)) }
+	return rutas[str(area)]
+
+# Dibuja el mapa y marca las areas en las que aparece el
+# pokemon cuya info se habia buscado. Para ello, recibe
+# una lista de tuplas (nombre_especie, area) donde el campo
+# area indica la ruta del mapa en que aparece el pokemon.
+def dibujar_pantalla_mapa(win, pkmn_areas):
+	fps = 20
+	while True:
+		limpiar_pantalla(win)
+		# Cargo imagen del mapa en el centro de la pantalla
+		img = Image(Point(320,240), "img/map.gif")
+		img.draw(win)
+		# Si el pokemon no tiene area, muestro "area unknown"
+		if(len(pkmn_areas) == 0):
+			rct = Rectangle(Point(0, 48), Point(640, 480))
+			rct.setFill("black")
+			rct.setTransparency()
+			rct.draw(win)
+			img = Image(Point(320,240), "img/areaUnknown.gif")
+			img.draw(win)
+		# Resalto las areas donde el pokemon aparece
+		for area in pkmn_areas:
+			rct = generar_rectangulo_area(area[1])
+			rct.setFill("red")
+			rct.setTransparency()
+			rct.draw(win)
+		# Chequeo si se presiono alguna tecla
+		tecla = win.checkKey()
+		if(tecla == "Escape"):
+			return "pokedex"
+		elif(tecla.lower() == "left"):
+			return "info"
+		elif(tecla.lower() == "f1"):
+			return "exit"
+		update(fps)
 		
 # Dibuja la pantalla de info del pokemon elegido. La info
 # del pokemon debe ser una unica tupla con el sgte formato:
@@ -17,15 +87,15 @@ def dibujar_pantalla_info(win, pkmn_info):
 	while True:
 		limpiar_pantalla(win)
 		# Cargo imagen de la pokedex en el centro de la pantalla
-		img = Image(Point(320,240), "img/infoScreen.gif")
+		img = Image(Point(320,239), "img/infoScreen.gif")
 		img.draw(win)
 		# Imagen del pokemon actual
 		img_centro = "img/" + pkmn_info[1].lower() + ".gif"
-		img = Image(Point(120,110), img_centro)
+		img = Image(Point(120,170), img_centro)
 		img.draw(win)
 		# Nombre del pokemon actual
 		pkmn_txt = format(pkmn_info[0], "03d") + "-" + pkmn_info[1]
-		txt = Text(Point(210, 80), pkmn_txt)
+		txt = Text(Point(210, 100), pkmn_txt)
 		txt.draw(win)
 		txt.setStyle("bold")
 		txt.setFace("courier")
@@ -55,12 +125,14 @@ def dibujar_pantalla_info(win, pkmn_info):
 		txt.setSize(20)
 		# Si fue capturado, imprimo pokeball
 		if(pkmn_info[3] > 0):
-			img_pkball = Image(Point(588, 30), "img/pokeball.gif")
+			img_pkball = Image(Point(588, 100), "img/pokeball.gif")
 			img_pkball.draw(win)
 		# Chequeo si se presiono alguna tecla
 		tecla = win.checkKey()
 		if(tecla == "Escape"):
 			return ("pokedex", 0)
+		elif(tecla.lower() == "right"):
+			return ("mapa", pkmn_info[1])
 		elif(tecla.lower() == "f1"):
 			return ("exit", 0)
 		update(fps)
@@ -190,7 +262,17 @@ if __name__ == '__main__':
 			(mode, rc) = dibujar_pantalla_info(win, rc[0])
 			if(mode == "pokedex"):
 				rc = devolver_todas_especies(trainer)
+		elif(mode == "mapa"):
+			# Modo mapa: muestra las areas en las que aparece
+			# el pokemon recibido. El mismo está en rc
+			mode = dibujar_pantalla_mapa(win, devolver_areas_pokemon(rc))
+			if(mode == "pokedex"):
+				rc = devolver_todas_especies(trainer)
 		elif(mode == "busqueda"):
+			# Modo busqueda: permite buscar pokemon en la pokedex
+			# por nombre, tipo o area en la que aparecen. Devuelve
+			# en rc los resultados de la busqueda para mostrar en
+			# la pokedex (es decir, devuelve tambien mode = "pokedex")
 			(mode, rc) = dibujar_pantalla_busqueda(win, trainer)
 
 		
