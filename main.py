@@ -75,6 +75,8 @@ def dibujar_pantalla_mapa(win, pkmn_areas):
 			return "pokedex"
 		elif(tecla.lower() == "left"):
 			return "info"
+		elif(tecla.lower() == "right"):
+			return "evol"
 		elif(tecla.lower() == "f1"):
 			return "exit"
 		update(fps)
@@ -86,7 +88,7 @@ def dibujar_pantalla_info(win, pkmn_info):
 	fps = 20
 	while True:
 		limpiar_pantalla(win)
-		# Cargo imagen de la pokedex en el centro de la pantalla
+		# Cargo imagen de la pantalla en el centro
 		img = Image(Point(320,239), "img/infoScreen.gif")
 		img.draw(win)
 		# Imagen del pokemon actual
@@ -187,12 +189,73 @@ def dibujar_pantalla_busqueda(win, cod_entrenador):
 		elif(tecla.lower() == "f1"):
 			return ("exit", 0)
 		update(fps)
-	
+
+# Dibuja la pantalla de evoluciones del pokemon elegido. Se
+# debe recibir el nombre de la especie de pokemon.	
+def dibujar_pantalla_evol(win, nombre_especie):
+	fps = 20
+	# Obtengo pre-evolución y evolución del pkmn
+	pres = devolver_preevoluciones(nombre_especie)
+	evos = devolver_evoluciones(nombre_especie)
+	while True:
+		limpiar_pantalla(win)
+		# Cargo imagen de la pokedex en el centro de la pantalla
+		img = Image(Point(320,239), "img/evolScreen.gif")
+		img.draw(win)
+		# Imagen del pokemon actual
+		img_centro = "img/" + nombre_especie.lower() + ".gif"
+		img = Image(Point(320,190), img_centro)
+		img.draw(win)
+		evo_info = []
+		# Imagen de pre-evolucion y evolucion
+		if(len(pres) > 0):
+			img_izqda = "img/" + pres[0][0].lower() + ".gif"
+			img = Image(Point(120,190), img_izqda)
+			img.draw(win)
+			img = Image(Point(220,190), "img/arrow.gif")
+			img.draw(win)
+			if(pres[0][1].isdigit()):
+				evo_info.append(pres[0][0] + " evolves into " + nombre_especie + " at level " + pres[0][1] + ".")
+			else:
+				evo_info.append(pres[0][0] + " evolves into " + nombre_especie + " by using " + pres[0][1] + ".")
+		if(len(evos) > 0):
+			img_dcha = "img/" + evos[0][0].lower() + ".gif"
+			img = Image(Point(520,190), img_dcha)
+			img.draw(win)
+			img = Image(Point(420,190), "img/arrow.gif")
+			img.draw(win)
+			if(evos[0][1].isdigit()):
+				evo_info.append(nombre_especie + " evolves into " + evos[0][0] + " at level " + evos[0][1] + ".")
+			else:
+				evo_info.append(nombre_especie + " evolves into " + evos[0][0] + " by using " + evos[0][1] + ".")
+		if(len(pres) == 0 and len(evos) == 0):
+				evo_info.append("No evolutions could be found with this pokémon.")
+		# Imprimo la evo_info
+		n_linea = 0
+		for w in evo_info:
+			txt = Text(Point(30, n_linea*37 + 308), evo_info[n_linea])
+			txt.draw(win)
+			txt.setStyle("bold")
+			txt.setFace("courier")
+			txt.setSize(14)
+			n_linea += 1
+		# Chequeo si se presiono alguna tecla
+		tecla = win.checkKey()
+		if(tecla == "Escape"):
+			return ("pokedex", 0)
+		elif(tecla.lower() == "left"):
+			return ("mapa", nombre_especie)
+		elif(tecla.lower() == "f1"):
+			return ("exit", 0)
+		update(fps)	
 		
 # Dibuja la pokedex usando la lista de pokemon recibida. Las tuplas
 # de la lista deben respetar el sgte formato:
 # (nro_pokedex, nombre_pkmn, fue_capturado?)		
-def dibujar_pokedex(win, pokemon_list):
+def dibujar_pokedex(win, pokemon_list, cod_entr):
+	# Cant de pokemon vistos y atrapados
+	cant_v = format(devolver_cant_pokemon(), "03d")
+	cant_a = format(devolver_cant_pokemon_atrapados(cod_entr), "03d")
 	# La view de la lista de la pokedex tiene tamaño para mostrar 11
 	# nombres de pokemon, siendo el sexto el "central". Para ir
 	# mostrandolos, voy indexando la pokemon_list 
@@ -204,6 +267,44 @@ def dibujar_pokedex(win, pokemon_list):
 		# Cargo imagen de la pokedex en el centro de la pantalla
 		img = Image(Point(320,240), "img/pokedex.gif")
 		img.draw(win)
+		# Muestro cant de pokemon vistos y atrapados
+		txt = Text(Point(58, 102), cant_v)
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(21)
+		txt.draw(win)
+		txt = Text(Point(58, 200), cant_a)
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(21)
+		txt.draw(win)
+		# Muestro textos con opciones
+		txt = Text(Point(3, 330), "S:Search")
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(19)
+		txt.draw(win)
+		txt = Text(Point(3, 360), "T:Trainer")
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(19)
+		txt.draw(win)
+		txt = Text(Point(3, 300), "Enter:Info")
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(19)
+		txt.draw(win)
+		txt = Text(Point(415, 450), "Trainer:"+str(cod_entr))
+		txt.setStyle("bold")
+		txt.setFace("courier")
+		txt.setTextColor("white")
+		txt.setSize(19)
+		txt.draw(win)
 		# Imagen del pokemon actual
 		img_centro = "img/" + pokemon_list[p_centro][1].lower() + ".gif"
 		img = Image(Point(252,240), img_centro)
@@ -216,13 +317,13 @@ def dibujar_pokedex(win, pokemon_list):
 			# Entrada de la lista para el pokemon aux-esimo
 			list_txt = format(pokemon_list[aux][0], "03d") + "-" + pokemon_list[aux][1]
 			txt = Text(Point(376, i*37 + 40), list_txt)
+			txt.setStyle("bold")
+			txt.setFace("courier")
+			txt.setSize(21)
 			txt.draw(win)
 			if(pokemon_list[aux][2] > 0):
 				img_pkball = Image(Point(365, i*37 + 56), "img/pokeball.gif")
 				img_pkball.draw(win)
-			txt.setStyle("bold")
-			txt.setFace("courier")
-			txt.setSize(21)
 			aux += 1
 		# Chequeo si se presiono alguna tecla
 		tecla = win.checkKey()
@@ -234,6 +335,8 @@ def dibujar_pokedex(win, pokemon_list):
 			return ("info", pokemon_list[p_centro][1])
 		elif(tecla.lower() == "s"):
 			return ("busqueda", 0)
+		elif(tecla.lower() == "t"):
+			return ("pokedex", 0)
 		elif(tecla.lower() == "f1"):
 			return ("exit", 0)
 		update(fps)
@@ -252,7 +355,13 @@ if __name__ == '__main__':
 		if(mode == "pokedex"):
 			# Modo pokedex: recibe en rc una lista de especies
 			# pokemon y las dibuja dentro de la pokedex
-			(mode, rc) = dibujar_pokedex(win, rc)
+			(mode, rc) = dibujar_pokedex(win, rc, trainer)
+			if(mode == "pokedex"):
+				if(trainer == 125779):
+					trainer = 423788
+				else:
+					trainer = 125779
+				rc = devolver_todas_especies(trainer)
 		elif(mode == "info"):
 			# Modo pantalla info: recibe del modo pokedex el nombre
 			# de una especie pokemon, busca su info y la muestra.
@@ -266,6 +375,12 @@ if __name__ == '__main__':
 			# Modo mapa: muestra las areas en las que aparece
 			# el pokemon recibido. El mismo está en rc
 			mode = dibujar_pantalla_mapa(win, devolver_areas_pokemon(rc))
+			if(mode == "pokedex"):
+				rc = devolver_todas_especies(trainer)
+		elif(mode == "evol"):
+			# Modo evol: muestra las evoluciones del
+			# pokemon recibido. El mismo está en rc
+			(mode, rc) = dibujar_pantalla_evol(win, rc)
 			if(mode == "pokedex"):
 				rc = devolver_todas_especies(trainer)
 		elif(mode == "busqueda"):

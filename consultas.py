@@ -120,3 +120,28 @@ def devolver_preevoluciones(nombre_especie):
 	rc = realizar_consulta(conn, q)
 	cerrar_conexion(conn)
 	return rc
+
+# Devuelve la cantidad de pokemon en la pokedex ("vistos")
+def devolver_cant_pokemon():
+	conn = establecer_conexion()
+	q = ("SELECT COUNT(*) "
+		"FROM especie_pokemon "
+		)
+	print q
+	rc = realizar_consulta(conn, q)
+	cerrar_conexion(conn)
+	return rc[0][0]
+	
+# Devuelve la cantidad de pokemon atrapados por el
+# entrenador recibido
+def devolver_cant_pokemon_atrapados(cod_entrenador):
+	conn = establecer_conexion()
+	q = ("SELECT COUNT(DISTINCT p.nombre_especie) "
+		"FROM pokemon_capturado pc INNER JOIN pokemon p "
+		" ON p.id = pc.pokemon_id "
+		"WHERE pc.codigo_entrenador = " + str(cod_entrenador) 
+		)
+	print q
+	rc = realizar_consulta(conn, q)
+	cerrar_conexion(conn)
+	return rc[0][0]
